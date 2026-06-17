@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Effectiveness Survey</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1B3A6B; --accent: #2E75B6; --accent2: #0070C0;
+    --purple: #7030A0; --green: #375623; --green-light: #E2EFDA;
+    --amber: #C55A11; --amber-light: #FCE4D6; --red: #C00000; --red-light: #FFDFD6;
+    --blue-light: #DEEAF1; --blue-xlight: #EBF3FB;
+    --gray-100: #F4F6F9; --gray-200: #E8ECF1; --gray-300: #CDD3DB;
+    --gray-500: #7A8594; --gray-700: #404B5A; --gray-900: #1A2332;
+    --white: #FFFFFF; --border: #D0D7E2;
+    --radius: 10px; --radius-lg: 16px;
+    --shadow: 0 2px 12px rgba(27,58,107,0.08);
+    --shadow-md: 0 4px 24px rgba(27,58,107,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray-100); color: var(--gray-700); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+
+  .topbar { background: var(--primary); color: white; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 16px rgba(0,0,0,0.18); }
+  .topbar-brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+  .topbar-nav { display: flex; gap: 4px; }
+  .tab-btn { background: transparent; border: none; color: rgba(255,255,255,0.7); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.15s; }
+  .tab-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+  .tab-btn.active { background: rgba(255,255,255,0.18); color: white; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+  .step { display: none; }
+  .step.active { display: block; }
+
+  /* SURVEY */
+  .survey-shell { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .survey-hero { background: linear-gradient(135deg, var(--primary) 0%, var(--accent2) 100%); border-radius: var(--radius-lg); padding: 2.5rem 2rem; color: white; margin-bottom: 2rem; }
+  .survey-hero h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+  .survey-hero p { opacity: 0.85; font-size: 14px; line-height: 1.7; }
+  .survey-hero .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1rem; }
+  .survey-hero .tag { background: rgba(255,255,255,0.15); border-radius: 99px; padding: 3px 12px; font-size: 12px; font-weight: 500; }
+
+  .progress-wrap { margin-bottom: 2rem; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--gray-500); margin-bottom: 6px; }
+  .progress-track { height: 6px; background: var(--gray-200); border-radius: 99px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); border-radius: 99px; transition: width 0.4s ease; }
+
+  .section-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+  .section-header { background: var(--blue-xlight); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; gap: 10px; }
+  .section-num { background: var(--primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .section-title { font-weight: 700; color: var(--primary); font-size: 15px; }
+  .section-pts { margin-left: auto; font-size: 12px; color: var(--gray-500); background: white; border: 1px solid var(--border); padding: 2px 10px; border-radius: 99px; }
+  .section-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .q-block { }
+  .q-label { font-weight: 600; color: var(--gray-900); font-size: 14px; margin-bottom: 4px; line-height: 1.5; }
+  .q-hint { font-size: 12px; color: var(--gray-500); margin-bottom: 10px; }
+  .q-measure { font-size: 11px; color: var(--accent); background: var(--blue-xlight); padding: 3px 10px; border-radius: 99px; display: inline-block; margin-bottom: 10px; }
+
+  .radio-list, .check-list { display: flex; flex-direction: column; gap: 6px; }
+  .opt { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.15s; font-size: 14px; color: var(--gray-700); }
+  .opt:hover { border-color: var(--accent); background: var(--blue-xlight); }
+  .opt.selected { border-color: var(--accent2); background: var(--blue-xlight); color: var(--primary); font-weight: 600; }
+  .opt input { accent-color: var(--accent2); width: 16px; height: 16px; flex-shrink: 0; }
+
+  .scale-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .scale-row { display: flex; gap: 6px; }
+  .scale-btn { flex: 1; padding: 10px 4px; text-align: center; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--gray-500); background: white; transition: all 0.15s; }
+  .scale-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .scale-btn.selected { background: var(--accent2); color: white; border-color: var(--accent2); }
+  .scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray-500); }
+
+  .q-input, .q-textarea, .q-number { width: 100%; font-size: 14px; font-family: inherit; color: var(--gray-700); background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; outline: none; transition: border 0.15s; }
+  .q-input:focus, .q-textarea:focus, .q-number:focus { border-color: var(--accent2); }
+  .q-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  .q-number { max-width: 140px; }
+
+  .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  .btn-primary { background: var(--accent2); color: white; border: none; border-radius: 8px; padding: 11px 28px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .btn-primary:hover { background: var(--primary); }
+  .btn-ghost { background: white; color: var(--gray-700); border: 1.5px solid var(--border); border-radius: 8px; padding: 11px 22px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* RESULT */
+  .result-hero { background: linear-gradient(135deg, var(--primary) 0%, var(--purple) 100%); border-radius: var(--radius-lg); padding: 2.5rem 2rem; color: white; text-align: center; margin-bottom: 2rem; }
+  .result-score-ring { width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 3px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; margin: 1rem auto; font-size: 34px; font-weight: 800; }
+  .result-band-badge { display: inline-block; padding: 5px 18px; border-radius: 99px; font-size: 13px; font-weight: 700; margin: 0.5rem 0; background: rgba(255,255,255,0.2); }
+  .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 1.5rem 0; }
+  .result-card { background: white; border-radius: var(--radius); padding: 1.2rem; text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .result-card .val { font-size: 22px; font-weight: 700; color: var(--primary); }
+  .result-card .lbl { font-size: 12px; color: var(--gray-500); margin-top: 3px; }
+  .insight-list { display: flex; flex-direction: column; gap: 8px; margin: 1.5rem 0; }
+  .insight-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: white; font-size: 14px; line-height: 1.55; }
+  .insight-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+
+  /* DASHBOARD */
+  .dash-shell { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  .dash-hero { background: linear-gradient(135deg, var(--primary) 0%, var(--accent2) 100%); border-radius: var(--radius-lg); padding: 1.8rem 2rem; color: white; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .dash-hero h1 { font-size: 22px; font-weight: 700; }
+  .dash-hero p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+  .btn-danger { background: #E53935; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-danger:hover { background: #C62828; }
+  .btn-outline-white { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-outline-white:hover { background: rgba(255,255,255,0.2); }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 2rem; }
+  .kpi-card { background: white; border-radius: var(--radius-lg); padding: 1.2rem 1.4rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .kpi-card .kpi-val { font-size: 28px; font-weight: 800; color: var(--primary); }
+  .kpi-card .kpi-lbl { font-size: 12px; color: var(--gray-500); margin-top: 3px; font-weight: 500; }
+  .kpi-card .kpi-sub { font-size: 12px; color: var(--accent); margin-top: 6px; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 2rem; }
+  .chart-card { background: white; border-radius: var(--radius-lg); padding: 1.4rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .chart-card h3 { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 1rem; }
+  .chart-wrap { position: relative; height: 220px; }
+
+  .table-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
+  .table-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .table-header h3 { font-size: 15px; font-weight: 700; color: var(--primary); }
+  .search-box { border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 13px; font-family: inherit; outline: none; width: 220px; transition: border 0.15s; }
+  .search-box:focus { border-color: var(--accent2); }
+
+  .resp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .resp-table th { background: var(--gray-100); padding: 10px 14px; text-align: left; font-weight: 600; color: var(--gray-500); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  .resp-table td { padding: 10px 14px; border-bottom: 1px solid var(--gray-200); color: var(--gray-700); }
+  .resp-table tr:last-child td { border-bottom: none; }
+  .resp-table tr:hover td { background: var(--blue-xlight); }
+
+  .band-pill { display: inline-block; padding: 3px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .band-Beginner    { background: #FFDFD6; color: #C00000; }
+  .band-Developing  { background: #FCE4D6; color: #C55A11; }
+  .band-Proficient  { background: #FFF3CC; color: #9C6A00; }
+  .band-Advanced    { background: #E2EFDA; color: #375623; }
+  .band-Expert      { background: #E2D9F3; color: #7030A0; }
+
+  .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .score-bar-track { flex: 1; height: 6px; background: var(--gray-200); border-radius: 99px; overflow: hidden; max-width: 80px; }
+  .score-bar-fill { height: 100%; border-radius: 99px; }
+
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--gray-500); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 1rem; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-start; justify-content: center; padding: 2rem; overflow-y: auto; }
+  .modal-overlay.hidden { display: none; }
+  .modal-box { background: white; border-radius: var(--radius-lg); max-width: 700px; width: 100%; padding: 2rem; position: relative; box-shadow: var(--shadow-md); }
+  .modal-close { position: absolute; top: 1rem; right: 1rem; background: var(--gray-100); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+  .modal-section-scores { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin: 1.2rem 0; }
+  .modal-score-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--gray-100); border-radius: 6px; font-size: 13px; }
+  .modal-score-val { font-weight: 700; color: var(--primary); }
+
+  /* LOGIN */
+  .login-wrap { max-width: 420px; margin: 6rem auto; padding: 0 1.5rem; }
+  .login-card { background: white; border-radius: var(--radius-lg); padding: 2.5rem; border: 1px solid var(--border); box-shadow: var(--shadow-md); }
+  .login-card h2 { font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+  .login-card p { font-size: 14px; color: var(--gray-500); margin-bottom: 1.5rem; }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 5px; }
+  .field input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; transition: border 0.15s; }
+  .field input:focus { border-color: var(--accent2); }
+  .login-error { background: var(--red-light); color: var(--red); font-size: 13px; padding: 8px 12px; border-radius: 6px; margin-bottom: 1rem; display: none; }
+
+  /* SETUP BANNER */
+  .setup-banner { background: #FFF8E1; border: 1px solid #FFD54F; border-radius: var(--radius); padding: 1rem 1.25rem; font-size: 13px; color: #5D4037; margin-bottom: 1.5rem; display: flex; gap: 10px; align-items: flex-start; }
+  .setup-banner .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+  .loading-overlay.hidden { display: none; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--gray-200); border-top-color: var(--accent2); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .sync-ok { background: #4CAF50; }
+  .sync-err { background: #F44336; }
+  .sync-wait { background: #FFC107; }
+
+  @media (max-width: 640px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .result-grid { grid-template-columns: repeat(2, 1fr); }
+    .modal-section-scores { grid-template-columns: 1fr; }
+    .topbar { padding: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-brand">🤖 AI Effectiveness Survey</div>
+  <div class="topbar-nav">
+    <button class="tab-btn active" onclick="showPage('survey')">Take Survey</button>
+    <button class="tab-btn" onclick="goToDashboard()">Admin Dashboard</button>
+  </div>
+</nav>
+
+<div class="loading-overlay hidden" id="loading-overlay">
+  <div class="spinner"></div>
+  <p style="font-size:14px;color:var(--gray-500)" id="loading-msg">Submitting...</p>
+</div>
+
+<!-- ══════════════════════════════════ SURVEY PAGE -->
+<div id="page-survey" class="page active">
+  <div class="survey-shell">
+
+    <div class="step active" id="step-0">
+      <div class="survey-hero">
+        <h1>AI Effectiveness Survey</h1>
+        <p>This survey helps understand how effectively your team uses AI tools — identifying strengths, gaps, and training opportunities. Takes about 8–10 minutes.</p>
+        <div class="tags">
+          <span class="tag">Amazon Listings</span><span class="tag">Content Writing</span>
+          <span class="tag">Excel Analysis</span><span class="tag">Automation</span>
+          <span class="tag">Market Research</span><span class="tag">Reporting</span>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-num">👤</div>
+          <div class="section-title">Before we begin</div>
+        </div>
+        <div class="section-body">
+          <div class="q-block">
+            <div class="q-label">Your full name <span style="color:var(--red)">*</span></div>
+            <input class="q-input" id="inp-name" placeholder="e.g. Priya Sharma" />
+          </div>
+          <div class="q-block">
+            <div class="q-label">Department / Role <span style="color:var(--red)">*</span></div>
+            <select class="q-input" id="inp-dept" style="cursor:pointer">
+              <option value="">Select department</option>
+              <option>Product / Design</option>
+              <option>Engineering / Development</option>
+              <option>Marketing / Content</option>
+              <option>Data / Analytics</option>
+              <option>Operations / Admin</option>
+              <option>Amazon / E-commerce</option>
+              <option>Customer Support</option>
+              <option>Management / Leadership</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="nav-row"><div></div><button class="btn-primary" onclick="startSurvey()">Start Survey →</button></div>
+    </div>
+
+    <div class="step" id="step-survey">
+      <div class="progress-wrap">
+        <div class="progress-meta"><span id="prog-label">Section 1 of 6</span><span id="prog-pct">0%</span></div>
+        <div class="progress-track"><div class="progress-bar" id="prog-bar" style="width:0%"></div></div>
+      </div>
+      <div id="survey-sections"></div>
+      <div class="nav-row">
+        <button class="btn-ghost" id="btn-prev" onclick="prevSection()">← Back</button>
+        <button class="btn-primary" id="btn-next" onclick="nextSection()">Next →</button>
+      </div>
+    </div>
+
+    <div class="step" id="step-result"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ DASHBOARD PAGE -->
+<div id="page-dashboard" class="page">
+  <div id="dash-login">
+    <div class="login-wrap">
+      <div class="login-card">
+        <h2>Admin Dashboard</h2>
+        <p>Enter the admin password to view survey results.</p>
+        <div class="login-error" id="login-error">Incorrect password. Try again.</div>
+        <div class="field"><label>Password</label><input type="password" id="dash-pw" placeholder="Enter password" onkeydown="if(event.key==='Enter')loginDash()" /></div>
+        <button class="btn-primary" style="width:100%" onclick="loginDash()">Access Dashboard →</button>
+        <p style="font-size:12px;color:var(--gray-500);margin-top:1rem;text-align:center">Default: <strong>admin123</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="dash-content" style="display:none">
+    <div class="dash-shell">
+      <div class="dash-hero">
+        <div>
+          <h1>Team AI Effectiveness Dashboard</h1>
+          <p id="dash-subtitle">Loading responses...</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-outline-white" onclick="refreshDashboard()">🔄 Refresh</button>
+          <button class="btn-outline-white" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <div id="setup-warning" class="setup-banner" style="display:none">
+        <span class="icon">⚠️</span>
+        <div>
+          <strong>Google Sheets not connected yet.</strong> The dashboard is showing demo data.
+          Follow the setup guide in <code>SETUP.md</code> to connect your Google Sheet, then paste your Script URL below.<br><br>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">
+            <input id="script-url-inp" style="flex:1;min-width:260px;border:1px solid #ccc;border-radius:6px;padding:6px 10px;font-size:13px;font-family:inherit" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" />
+            <button onclick="saveScriptUrl()" style="background:var(--accent2);color:white;border:none;border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit">Save & Connect</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sync-status" style="font-size:12px;color:var(--gray-500);margin-bottom:1rem;display:none">
+        <span class="sync-dot sync-wait" id="sync-dot"></span><span id="sync-text">Connecting to Google Sheets...</span>
+      </div>
+
+      <div class="kpi-row" id="kpi-row"></div>
+      <div class="charts-row">
+        <div class="chart-card"><h3>Score Distribution</h3><div class="chart-wrap"><canvas id="chart-dist"></canvas></div></div>
+        <div class="chart-card"><h3>Maturity Bands</h3><div class="chart-wrap"><canvas id="chart-bands"></canvas></div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card"><h3>Section Average Scores (% of max)</h3><div class="chart-wrap"><canvas id="chart-sections"></canvas></div></div>
+        <div class="chart-card"><h3>Responses by Department</h3><div class="chart-wrap"><canvas id="chart-depts"></canvas></div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <h3>All Responses <span id="resp-count" style="font-weight:400;color:var(--gray-500);font-size:13px"></span></h3>
+          <input class="search-box" id="search-box" placeholder="🔍 Search name or dept..." oninput="renderTable()" />
+        </div>
+        <div style="overflow-x:auto">
+          <table class="resp-table">
+            <thead><tr><th>#</th><th>Name</th><th>Dept</th><th>Date</th><th>Score</th><th>Band</th><th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th><th>Action</th></tr></thead>
+            <tbody id="resp-tbody"></tbody>
+          </table>
+        </div>
+        <div id="table-empty" class="empty-state" style="display:none">
+          <div class="icon">📭</div><h3>No responses yet</h3>
+          <p>Share the survey link with your team to start collecting data.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="detail-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════ CONFIG
+// Change these two values:
+const ADMIN_PASSWORD = '28081994';
+let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzP6KZD9gvnVu7SgjVATqZD5D52WWGuth5w46p6toNvnO0H6cCpu4AsBf8-IlVWpOI8/exec';
+
+// ══════════════════════════════════════════ SURVEY DATA
+// MAX TOTAL = 50 points (S1=5, S2=10, S3=10, S4=10, S5=15)
+const SECTION_MAX_TOTAL = 50;
+const LEGACY_MAX = 76; // old max — used to normalize existing scores
+
+const SECTIONS = [
+  {
+    id:'s1', title:'AI Usage Frequency', pts:5,
+    questions:[
+      { id:'q1', type:'radio', maxPts:3, label:'How many hours per week do you actively use AI tools for work?', measure:'Baseline usage volume',
+        options:['Less than 1 hour','1–3 hours','3–7 hours','7–15 hours','More than 15 hours'], scores:[0,1,1,2,3] },
+      { id:'q2', type:'checkbox', maxPts:2, label:'Which AI tools do you currently use? (Select all that apply)', measure:'Tool diversity',
+        options:['ChatGPT (OpenAI)','Claude (Anthropic)','Gemini (Google)','Perplexity AI','Canva AI / Adobe Firefly','Microsoft Copilot','Midjourney / DALL·E / Stable Diffusion','n8n / Zapier / Make','Custom API or internal AI tool'],
+        scoring: v => { const n=v.length; return n===0?0:n<=2?1:2; } }
+    ]
+  },
+  {
+    id:'s2', title:'Prompt Management', pts:10,
+    questions:[
+      { id:'q3', type:'radio', maxPts:4, label:'How do you typically write your prompts?', measure:'Prompting behavior',
+        options:['Type whatever comes to mind','Brief instruction only','Include role, task, context and format','Use stored prompt templates','Documented prompt library with versioning'], scores:[0,1,2,3,4] },
+      { id:'q4', type:'radio', maxPts:4, label:'Do you save prompts that produce good results?', measure:'Prompt reuse discipline',
+        options:['Never save prompts','Sometimes copy-paste to notes','Personal prompt file or doc','Structured prompt library with categories','Maintain and share team prompt library'], scores:[0,1,2,3,4] },
+      { id:'q5', type:'number', maxPts:2, label:'How many reusable prompts have you created and documented in the last 30 days?', measure:'Prompt productivity', hint:'Enter 0 if none',
+        scoring: v => { const n=parseInt(v)||0; return n===0?0:n<=3?1:2; } }
+    ]
+  },
+  {
+    id:'s3', title:'Prompt Quality', pts:10,
+    questions:[
+      { id:'q6', type:'checkbox', maxPts:5, label:'Which prompting techniques do you use? (Select all that apply)', measure:'Technique breadth',
+        options:['Assign AI a role ("Act as a senior Amazon copywriter")','Provide context or background','Specify output format (table, bullets, JSON)','Add constraints ("Do not use generic phrases")','Few-shot examples (sample input/output pairs)','Chain-of-thought ("Think step by step")','Specify tone, length, or audience'],
+        scoring: v => { const n=v.length; return n===0?0:n===1?1:n<=3?2:n<=5?4:5; } },
+      { id:'q7', type:'radio', maxPts:3, label:'How many corrections before an AI output is usable?', measure:'First-pass success rate',
+        options:['6+ — many back-and-forth exchanges','3–5 corrections','1–2 minor corrections','0–1 — first prompt gets 80%+','Near-perfect output first try consistently'], scores:[0,0,1,2,3] },
+      { id:'q8', type:'scale', maxPts:2, label:'Rate typical AI output quality before editing. (1–5)', measure:'Perceived output quality',
+        scaleMin:'Barely usable', scaleMax:'Near-perfect', scoring: v => v<=2?0:v<=3?1:2 }
+    ]
+  },
+  {
+    id:'s4', title:'Efficiency & Usage', pts:10,
+    questions:[
+      { id:'q9', type:'radio', maxPts:3, label:'How much time per week do you save using AI vs doing it manually?', measure:'Time ROI',
+        options:['No time saved','Less than 30 min','30 min – 1 hour','1–3 hours','3–5 hours','More than 5 hours'], scores:[0,0,1,1,2,3] },
+      { id:'q10', type:'checkbox', maxPts:3, label:'For which tasks are you using AI? (Select all that apply)', measure:'Application breadth',
+        options:['Amazon product listing writing','Keyword research & SEO','Product image prompts (Midjourney, Canva AI)','Customer support replies/templates','Market research & competitor analysis','Excel/Sheets data analysis & formulas','Reporting (weekly/monthly reports)','Process documentation / SOPs','Email or ad copywriting','Operations or inventory management'],
+        scoring: v => { const n=v.length; return n===0?0:n<=3?1:n<=6?2:3; } },
+      { id:'q11', type:'radio', maxPts:2, label:'How often do AI outputs require significant editing?', measure:'Editing burden',
+        options:['Almost always — heavy rework','Frequently — more than half the time','Sometimes — about half the time','Rarely — minor fixes only','Almost never — production ready'], scores:[0,0,1,1,2] },
+      { id:'q12', type:'radio', maxPts:2, label:'What % of AI outputs do you use with minor or no edits?', measure:'Output fitness rate',
+        options:['Less than 20%','20–40%','40–60%','60–80%','More than 80%'], scores:[0,0,1,1,2] }
+    ]
+  },
+  {
+    id:'s5', title:'Advanced Usage & Automation', pts:15,
+    questions:[
+      { id:'q13', type:'checkbox', maxPts:5, label:'Have you used AI to create any of these? (Select all that apply)', measure:'Advanced application',
+        options:['A standard operating procedure (SOP)','A reusable content framework/template','A prompt others on your team now use','A multi-step AI workflow connecting 2+ tools','An automated report or dashboard','A custom system prompt or GPT configuration'],
+        scoring: v => Math.min(v.length, 5) },
+      { id:'q14', type:'scale', maxPts:2, label:'Comfort connecting AI to other tools (n8n, Zapier, Sheets APIs). (1–5)', measure:'Technical AI depth',
+        scaleMin:'Never tried', scaleMax:'Build independently', scoring: v => v<=2?0:v<=3?1:2 },
+      { id:'q15', type:'checkbox', maxPts:3, label:'Which automation tools have you used? (Select all that apply)', measure:'Automation adoption',
+        options:['Zapier','n8n','Make (Integromat)','OpenAI / Claude API directly','Google Apps Script + AI','Custom Python or code + AI API'],
+        scoring: v => { const n=v.length; return n===0?0:n===1?1:n<=3?2:3; } },
+      { id:'q16', type:'radio', maxPts:3, label:'Do you share effective prompts or workflows with your team?', measure:'Knowledge sharing',
+        options:['Keep prompts to myself','Share when directly asked','Share useful prompts informally','Contribute to a shared prompt library','Lead prompt-sharing sessions / document best practices'], scores:[0,0,1,2,3] },
+      { id:'q17', type:'radio', maxPts:2, label:'Have you helped a colleague improve their AI usage in the last 3 months?', measure:'Peer mentoring',
+        options:['No','Informally answered a question','Walked a colleague through a workflow','Ran a structured session, demo, or wrote a guide'], scores:[0,1,1,2] }
+    ]
+  }
+];
+
+const OPEN_SECTION = {
+  title:'Examples & Evidence',
+  questions:[
+    { id:'q18', label:'Paste your best prompt — one that consistently delivers strong results.', hint:'Include role, task, format, constraints if used.' },
+    { id:'q19', label:'Describe one workflow or process you have automated or improved using AI.', hint:'What did it replace? How much time does it save?' },
+    { id:'q20', label:'What is your biggest challenge with AI tools right now?', hint:'Be honest — this helps design better training.' }
+  ]
+};
+
+// ══════════════════════════════════════════ STATE
+let answers = {}, currentSection = 0, respondentName = '', respondentDept = '';
+let dashResponses = [], chartDist, chartBands, chartSections, chartDepts;
+
+// ══════════════════════════════════════════ PAGE NAV
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (p==='survey'&&i===0)||(p==='dashboard'&&i===1)));
+}
+function goToDashboard() { showPage('dashboard'); }
+
+// ══════════════════════════════════════════ SURVEY
+function startSurvey() {
+  respondentName = document.getElementById('inp-name').value.trim();
+  respondentDept = document.getElementById('inp-dept').value;
+  if (!respondentName || !respondentDept) { alert('Please enter your name and department.'); return; }
+  document.getElementById('step-0').classList.remove('active');
+  document.getElementById('step-survey').classList.add('active');
+  renderSection();
+}
+
+function renderSection() {
+  const isLast = currentSection === SECTIONS.length;
+  const total = SECTIONS.length + 1;
+  const pct = Math.round((currentSection / total) * 100);
+  document.getElementById('prog-bar').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('btn-prev').style.visibility = currentSection === 0 ? 'hidden' : 'visible';
+
+  if (isLast) {
+    document.getElementById('prog-label').textContent = `Section ${total} of ${total} — Open Questions`;
+    document.getElementById('btn-next').textContent = 'Submit Survey ✓';
+    renderOpenSection(); return;
+  }
+  document.getElementById('prog-label').textContent = `Section ${currentSection+1} of ${total}`;
+  document.getElementById('btn-next').textContent = 'Next →';
+
+  const sec = SECTIONS[currentSection];
+  let html = `<div class="section-card"><div class="section-header"><div class="section-num">${currentSection+1}</div><div class="section-title">${sec.title}</div><div class="section-pts">${sec.pts} pts</div></div><div class="section-body">`;
+  sec.questions.forEach(q => { html += renderQuestion(q); });
+  html += '</div></div>';
+  document.getElementById('survey-sections').innerHTML = html;
+
+  document.querySelectorAll('.opt').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const inp = this.querySelector('input');
+      if (inp.type === 'radio') {
+        document.querySelectorAll(`input[name="${inp.name}"]`).forEach(r => r.closest('.opt').classList.remove('selected'));
+        inp.checked = true; this.classList.add('selected'); saveAnswer(inp.name, inp.value);
+      } else {
+        inp.checked = !inp.checked; this.classList.toggle('selected', inp.checked);
+        const checked = Array.from(document.querySelectorAll(`input[name="${inp.name}"]:checked`)).map(i => i.value);
+        saveAnswer(inp.name, checked);
+      }
+    });
+  });
+  restoreAnswers();
+}
+
+function renderQuestion(q) {
+  let inner = '';
+  const saved = answers[q.id];
+  if (q.type === 'radio') {
+    inner = `<div class="radio-list">${q.options.map(o => `<label class="opt ${saved===o?'selected':''}"><input type="radio" name="${q.id}" value="${o}" ${saved===o?'checked':''}/>${o}</label>`).join('')}</div>`;
+  } else if (q.type === 'checkbox') {
+    inner = `<div class="check-list">${q.options.map(o => { const s=Array.isArray(saved)&&saved.includes(o); return `<label class="opt ${s?'selected':''}"><input type="checkbox" name="${q.id}" value="${o}" ${s?'checked':''}/>${o}</label>`; }).join('')}</div>`;
+  } else if (q.type === 'scale') {
+    const sv = saved || 0;
+    inner = `<div class="scale-wrap"><div class="scale-row">${[1,2,3,4,5].map(v=>`<button class="scale-btn ${sv==v?'selected':''}" onclick="selectScale('${q.id}',${v},this)">${v}</button>`).join('')}</div><div class="scale-labels"><span>${q.scaleMin}</span><span>${q.scaleMax}</span></div></div>`;
+  } else if (q.type === 'number') {
+    inner = `<input class="q-number" type="number" min="0" id="inp-${q.id}" placeholder="0" value="${saved||''}" oninput="saveAnswer('${q.id}',this.value)"/>`;
+  }
+  return `<div class="q-block"><div class="q-label">${q.label}</div>${q.hint?`<div class="q-hint">${q.hint}</div>`:''}<div class="q-measure">${q.measure}</div>${inner}</div>`;
+}
+
+function renderOpenSection() {
+  let html = `<div class="section-card"><div class="section-header"><div class="section-num">6</div><div class="section-title">${OPEN_SECTION.title}</div><div class="section-pts">Optional but valuable</div></div><div class="section-body">`;
+  OPEN_SECTION.questions.forEach(q => {
+    html += `<div class="q-block"><div class="q-label">${q.label}</div><div class="q-hint">${q.hint}</div><textarea class="q-textarea" id="inp-${q.id}" oninput="saveAnswer('${q.id}',this.value)">${answers[q.id]||''}</textarea></div>`;
+  });
+  html += '</div></div>';
+  document.getElementById('survey-sections').innerHTML = html;
+}
+
+function saveAnswer(id, val) { answers[id] = val; }
+function selectScale(id, v, btn) {
+  btn.closest('.scale-row').querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected'); saveAnswer(id, v);
+}
+function restoreAnswers() {
+  Object.keys(answers).forEach(id => { const el = document.getElementById('inp-'+id); if(el) el.value = answers[id]; });
+}
+function nextSection() { if (currentSection === SECTIONS.length) { submitSurvey(); return; } currentSection++; renderSection(); window.scrollTo(0,0); }
+function prevSection() { if (currentSection > 0) { currentSection--; renderSection(); window.scrollTo(0,0); } }
+
+// ══════════════════════════════════════════ SCORING (max = 50)
+const LEGACY_MAX = 76; // old survey max — used to normalize existing scores
+
+function computeScore() {
+  let total = 0;
+  const sectionScores = {};
+  SECTIONS.forEach(sec => {
+    let s = 0;
+    sec.questions.forEach(q => {
+      const val = answers[q.id]; let pts = 0;
+      if (q.type==='radio') { const i=q.options.indexOf(val); pts = i>=0?q.scores[i]:0; }
+      else if (q.type==='checkbox') { pts = q.scoring(Array.isArray(val)?val:[]); }
+      else if (q.type==='scale') { pts = q.scoring(parseInt(val)||0); }
+      else if (q.type==='number') { pts = q.scoring(val); }
+      s += pts;
+    });
+    sectionScores[sec.id] = Math.min(s, sec.pts);
+    total += sectionScores[sec.id];
+  });
+  return { total: Math.min(total, 50), sections: sectionScores };
+}
+
+// Normalize legacy scores — if score > 50 it was from old /76 system
+function normalizeScore(raw) {
+  const n = +raw || 0;
+  if (n > 50) return Math.round((n / LEGACY_MAX) * 50);
+  return n;
+}
+
+function getBand(score) {
+  // Bands on /50 scale: 0–10, 11–20, 21–30, 31–40, 41–50
+  if (score <= 10) return {band:'Beginner',  type:'Casual User',    color:'#C00000'};
+  if (score <= 20) return {band:'Developing', type:'Regular User',   color:'#C55A11'};
+  if (score <= 30) return {band:'Proficient', type:'Efficient User', color:'#9C6A00'};
+  if (score <= 40) return {band:'Advanced',   type:'Advanced User',  color:'#375623'};
+  return                  {band:'Expert',     type:'Power User',     color:'#7030A0'};
+}
+
+// ══════════════════════════════════════════ ROLE-SPECIFIC RECOMMENDATION ENGINE
+
+const ROLE_DATA = {
+  'Catalogue / Listings': {
+    icon: '🛒',
+    useCases: [
+      'Write Amazon A+ Content and bullet points using Claude — try: "Act as an Amazon SEO expert. Write 5 bullet points for [product] targeting [keyword]. Focus on benefits not features. Max 200 chars each."',
+      'Generate 10 title variations for A/B testing in 30 seconds using ChatGPT',
+      'Use Perplexity AI to research competitor listings and identify keyword gaps',
+      'Auto-generate backend search terms by pasting your product spec into Claude',
+      'Use Canva AI to create lifestyle images and infographics for listings without a designer',
+    ],
+    tools: [
+      {name:'Claude', use:'Listing copy, bullet points, A+ content', url:'https://claude.ai'},
+      {name:'ChatGPT', use:'Title variations, keyword brainstorming', url:'https://chat.openai.com'},
+      {name:'Perplexity AI', use:'Competitor research, market gaps', url:'https://perplexity.ai'},
+      {name:'Canva AI', use:'Listing images, infographics', url:'https://canva.com'},
+      {name:'Helium 10 Listing Builder', use:'SEO-optimised listing drafts', url:'https://www.helium10.com'},
+    ],
+    promptTemplate: {
+      title: 'Amazon Listing Bullet Points',
+      prompt: `Act as an expert Amazon copywriter with 10 years of experience selling in [CATEGORY].
+
+Product: [PRODUCT NAME]
+Key features: [LIST 3–5 FEATURES]
+Target keyword: [PRIMARY KEYWORD]
+Target customer: [WHO BUYS THIS]
+
+Write 5 bullet points following these rules:
+- Start each with a CAPITALISED benefit keyword
+- Lead with the customer benefit, then the feature
+- Include the primary keyword naturally in bullet 1
+- Max 200 characters each
+- No generic phrases like "high quality" or "great product"
+- Tone: confident and specific`
+    }
+  },
+
+  'Marketing / Content': {
+    icon: '📣',
+    useCases: [
+      'Generate a full month of social media content in one session — briefing Claude with your brand voice, product calendar and platforms',
+      'Use ChatGPT to write 10 subject line variations for email campaigns and A/B test them',
+      'Use Perplexity AI to find trending topics in your niche for content ideation',
+      'Create product description variants for Shopify vs Amazon vs Instagram in one prompt',
+      'Use Claude to repurpose one blog post into emails, social captions, WhatsApp messages and ads',
+    ],
+    tools: [
+      {name:'Claude', use:'Long-form content, brand voice, repurposing', url:'https://claude.ai'},
+      {name:'ChatGPT', use:'Ad copy, email subject lines, variations', url:'https://chat.openai.com'},
+      {name:'Perplexity AI', use:'Trend research, content ideas', url:'https://perplexity.ai'},
+      {name:'Canva AI', use:'Social graphics, ad creatives', url:'https://canva.com'},
+      {name:'Midjourney', use:'Lifestyle product photography prompts', url:'https://midjourney.com'},
+    ],
+    promptTemplate: {
+      title: 'Social Media Content Calendar',
+      prompt: `Act as a social media strategist for a D2C ecommerce brand.
+
+Brand: [BRAND NAME]
+Product category: [CATEGORY]
+Tone of voice: [e.g. friendly, premium, playful]
+Platforms: Instagram, Facebook
+Week: [DATE RANGE]
+Key message this week: [PROMO / PRODUCT / THEME]
+
+Create 5 posts (Mon–Fri) for each platform. For each post include:
+- Hook (first line that stops the scroll)
+- Body copy (2–3 lines)
+- CTA
+- 5 relevant hashtags
+- Content format suggestion (Reel, Carousel, Static)
+
+Do NOT use generic phrases. Write in brand voice.`
+    }
+  },
+
+  'Customer Support': {
+    icon: '💬',
+    useCases: [
+      'Build a library of 20 AI-generated response templates for your top support scenarios — returns, delays, wrong items, reviews',
+      'Use Claude to draft personalised responses to negative Amazon reviews in under 60 seconds',
+      'Create an AI-powered FAQ document by pasting your last 100 tickets into Claude and asking it to identify patterns',
+      'Use ChatGPT to translate support responses into regional languages instantly',
+      'Build a Zapier workflow: new negative review → AI drafts response → sent to Slack for approval',
+    ],
+    tools: [
+      {name:'Claude', use:'Empathetic, nuanced customer replies', url:'https://claude.ai'},
+      {name:'ChatGPT', use:'Template generation, translations', url:'https://chat.openai.com'},
+      {name:'Zapier', use:'Auto-route tickets, review alerts', url:'https://zapier.com'},
+      {name:'Tidio AI', use:'Live chat automation on Shopify', url:'https://tidio.com'},
+      {name:'Gorgias', use:'AI-assisted helpdesk for ecommerce', url:'https://gorgias.com'},
+    ],
+    promptTemplate: {
+      title: 'Negative Review Response',
+      prompt: `Act as a customer experience manager for a premium ecommerce brand.
+
+Review: "[PASTE CUSTOMER REVIEW HERE]"
+Product: [PRODUCT NAME]
+Issue type: [e.g. delayed delivery / wrong item / quality concern]
+Our policy: [e.g. free returns within 30 days]
+
+Write a public response to this review that:
+- Acknowledges the customer's frustration genuinely (not robotically)
+- Apologises without admitting legal fault
+- Offers a specific resolution
+- Ends with a positive brand note
+- Tone: warm, professional, human
+- Max 100 words`
+    }
+  },
+
+  'Operations / Logistics': {
+    icon: '⚙️',
+    useCases: [
+      'Use Claude to write SOPs for any process — paste your rough notes and ask it to format as a numbered SOP with decision points',
+      'Use ChatGPT + Excel to analyse shipment delay patterns and summarise in plain English',
+      'Build a Zapier flow: low stock alert in Shopify → AI summary → Slack notification to buyer',
+      'Use AI to draft supplier communication emails — RFQs, delay follow-ups, dispute letters',
+      'Ask Claude to create a risk register for your Q4 peak season operations',
+    ],
+    tools: [
+      {name:'Claude', use:'SOPs, process documentation, supplier emails', url:'https://claude.ai'},
+      {name:'ChatGPT', use:'Data summaries, Excel formula help', url:'https://chat.openai.com'},
+      {name:'Zapier', use:'Stock alerts, order routing automation', url:'https://zapier.com'},
+      {name:'n8n', use:'Custom multi-step ops workflows', url:'https://n8n.io'},
+      {name:'Notion AI', use:'Team wikis, runbooks, SOPs', url:'https://notion.so'},
+    ],
+    promptTemplate: {
+      title: 'SOP Writer',
+      prompt: `Act as an operations manager for an ecommerce company.
+
+Process to document: [PROCESS NAME e.g. "Processing a customer return"]
+Current rough steps: [PASTE YOUR NOTES OR BULLET POINTS]
+Team member who will follow this: [ROLE e.g. warehouse associate]
+Tools involved: [e.g. Shopify, our WMS, email]
+
+Write a complete SOP with:
+1. Purpose (1 sentence)
+2. Scope (who this applies to)
+3. Step-by-step instructions (numbered, clear, no assumed knowledge)
+4. Decision tree for common exceptions
+5. Escalation path if something goes wrong
+
+Format clearly. Use plain language.`
+    }
+  },
+
+  'Design / Creative': {
+    icon: '🎨',
+    useCases: [
+      'Use Midjourney or Stable Diffusion to generate lifestyle product photography concepts before briefing a photographer',
+      'Use Claude to write detailed image generation prompts — describe the scene, lighting, mood, background, model type',
+      'Use Canva AI to resize, reformat and localise creatives for different marketplaces in minutes',
+      'Use ChatGPT to generate 10 creative concepts for a product launch campaign',
+      'Use Adobe Firefly to remove backgrounds, generate backgrounds and create variations of product shots',
+    ],
+    tools: [
+      {name:'Midjourney', use:'Lifestyle imagery, concept art, backgrounds', url:'https://midjourney.com'},
+      {name:'Adobe Firefly', use:'Product image editing, background generation', url:'https://firefly.adobe.com'},
+      {name:'Canva AI', use:'Resizing, brand kit application, social graphics', url:'https://canva.com'},
+      {name:'Claude', use:'Image prompt writing, creative briefs', url:'https://claude.ai'},
+      {name:'DALL·E 3', use:'Quick concept visuals, mood boards', url:'https://openai.com/dall-e-3'},
+    ],
+    promptTemplate: {
+      title: 'Midjourney Product Image Prompt',
+      prompt: `Write a detailed Midjourney prompt for a product lifestyle image.
+
+Product: [PRODUCT NAME AND DESCRIPTION]
+Mood: [e.g. premium, natural, energetic, minimalist]
+Setting: [e.g. kitchen countertop, outdoor table, flat lay]
+Lighting: [e.g. soft natural light, golden hour, studio white]
+Colour palette: [e.g. earth tones, white and gold, vibrant]
+Target audience aesthetic: [e.g. millennial women, fitness enthusiasts]
+Aspect ratio needed: [e.g. 1:1 for Instagram, 16:9 for banner]
+
+Format the output as a ready-to-paste Midjourney prompt with style parameters.`
+    }
+  },
+
+  'Data / Analytics': {
+    icon: '📊',
+    useCases: [
+      'Paste raw sales data into Claude and ask for a plain-English summary with key trends and anomalies',
+      'Use ChatGPT to write Excel / Google Sheets formulas — just describe what you want in plain English',
+      'Use Claude to interpret your Amazon Business Reports and highlight what to act on',
+      'Ask AI to create a weekly reporting template — then just paste in numbers each week',
+      'Use Perplexity AI to benchmark your performance metrics against industry averages',
+    ],
+    tools: [
+      {name:'Claude', use:'Data interpretation, report narratives', url:'https://claude.ai'},
+      {name:'ChatGPT', use:'Formula writing, pivot table help', url:'https://chat.openai.com'},
+      {name:'Perplexity AI', use:'Benchmarking, industry data research', url:'https://perplexity.ai'},
+      {name:'Julius AI', use:'Upload CSVs, get instant charts and insights', url:'https://julius.ai'},
+      {name:'n8n', use:'Automated reporting pipelines', url:'https://n8n.io'},
+    ],
+    promptTemplate: {
+      title: 'Sales Data Analysis',
+      prompt: `Act as a senior ecommerce data analyst.
+
+Here is my sales data for [TIME PERIOD]:
+[PASTE YOUR DATA OR KEY METRICS HERE]
+
+Please:
+1. Summarise overall performance in 3 bullet points
+2. Identify the top 3 performing SKUs and explain why they might be winning
+3. Flag any concerning trends or anomalies
+4. Identify 2–3 specific actions I should take based on this data
+5. Suggest what additional data would help make better decisions
+
+Be specific and direct. Avoid vague observations.`
+    }
+  },
+
+  'Management / Leadership': {
+    icon: '🧭',
+    useCases: [
+      'Use Claude to turn rough notes from team meetings into structured action items, owners and deadlines',
+      'Build a monthly business review template — AI fills in narrative analysis when you paste the numbers',
+      'Use ChatGPT to draft performance review feedback, job descriptions and onboarding documents',
+      'Ask Claude to identify bottlenecks in your operational process by describing your current workflow',
+      'Use AI to create a competitor analysis framework — feed it competitor data and get structured SWOT outputs',
+    ],
+    tools: [
+      {name:'Claude', use:'Strategy docs, meeting summaries, reports', url:'https://claude.ai'},
+      {name:'ChatGPT', use:'HR documents, communication drafts', url:'https://chat.openai.com'},
+      {name:'Notion AI', use:'Team wikis, OKRs, project briefs', url:'https://notion.so'},
+      {name:'Perplexity AI', use:'Market intelligence, competitor research', url:'https://perplexity.ai'},
+      {name:'Zapier', use:'Cross-tool automation, reporting triggers', url:'https://zapier.com'},
+    ],
+    promptTemplate: {
+      title: 'Meeting to Action Items',
+      prompt: `Act as a chief of staff.
+
+Here are my rough notes from today's team meeting:
+[PASTE MEETING NOTES]
+
+Please:
+1. Write a 3-sentence executive summary of what was discussed
+2. Extract all decisions made (numbered list)
+3. Extract all action items in this format:
+   - Task | Owner | Deadline | Priority (High/Medium/Low)
+4. Flag any unresolved issues or open questions
+5. Suggest 1–2 follow-up agenda items for next week
+
+Be concise. No waffle.`
+    }
+  },
+
+  'default': {
+    icon: '🤖',
+    useCases: [
+      'Use Claude to write, edit and improve any document — just paste your draft and ask for specific improvements',
+      'Use ChatGPT to brainstorm ideas, generate options and think through problems faster',
+      'Use Perplexity AI for research — it cites sources so you can verify what you find',
+      'Build your personal prompt library — save every prompt that works well in a Notion doc',
+      'Use Zapier to connect AI to your existing tools without writing any code',
+    ],
+    tools: [
+      {name:'Claude', use:'Writing, analysis, reasoning', url:'https://claude.ai'},
+      {name:'ChatGPT', use:'Brainstorming, drafting, Q&A', url:'https://chat.openai.com'},
+      {name:'Perplexity AI', use:'Research with citations', url:'https://perplexity.ai'},
+      {name:'Canva AI', use:'Design and visuals', url:'https://canva.com'},
+      {name:'Zapier', use:'No-code automation', url:'https://zapier.com'},
+    ],
+    promptTemplate: {
+      title: 'General Task Prompt',
+      prompt: `Act as an expert in [YOUR ROLE / DOMAIN].
+
+Task: [DESCRIBE WHAT YOU NEED]
+Context: [RELEVANT BACKGROUND]
+Format: [HOW YOU WANT THE OUTPUT e.g. bullet list, table, paragraph]
+Constraints: [ANYTHING TO AVOID OR INCLUDE]
+Tone: [e.g. professional, casual, concise]`
+    }
+  }
+};
+
+const BAND_NEXT_LEVEL = {
+  'Beginner': {
+    headline: 'You\'re just getting started — here\'s your fast track',
+    description: 'Most people at this stage use AI like a search engine — typing questions and hoping for good answers. The leap to the next level is simple: start giving AI more context.',
+    nextSteps: [
+      'Start every AI prompt with a role: "Act as a [job title] with 10 years experience in ecommerce"',
+      'Add the output format you want: "Give me this as a numbered list" or "Format as a table"',
+      'Save the first prompt that works well — paste it into a Google Doc called "My Prompt Library"',
+    ]
+  },
+  'Developing': {
+    headline: 'You\'re past the basics — time to systematise',
+    description: 'You\'re getting useful outputs but probably rewriting prompts from scratch each time. The unlock at this level is templates — prompts you reuse and refine rather than reinvent.',
+    nextSteps: [
+      'Turn your 3 most-used tasks into saved prompt templates this week',
+      'Add examples to your prompts: "Here\'s an example of what good looks like: [paste example]"',
+      'Try chain-of-thought: add "Think step by step before answering" to complex prompts',
+    ]
+  },
+  'Proficient': {
+    headline: 'You\'re efficient — now make it scale across the team',
+    description: 'You\'re saving real time but the value is staying with you. The next level is about turning your personal system into a team asset.',
+    nextSteps: [
+      'Pick your 3 best prompts and share them with the team this week',
+      'Build one automation workflow — connect AI to a tool you use daily via Zapier',
+      'Write one SOP for a repeatable task using AI to help draft it',
+    ]
+  },
+  'Advanced': {
+    headline: 'You\'re a force multiplier — now drive ROI',
+    description: 'You\'re using AI strategically and helping others. The Expert level is about measuring impact and owning the AI roadmap for your team.',
+    nextSteps: [
+      'Define 3 KPIs to track your AI impact monthly (hours saved, first-pass rate, prompts shared)',
+      'Build a multi-step automation that touches 3+ tools end-to-end',
+      'Run a 30-minute prompt engineering session with your team this month',
+    ]
+  },
+  'Expert': {
+    headline: 'You\'re a Power User — now build the system',
+    description: 'You\'re at the top of the maturity curve. Your job now is to institutionalise what you know — so the whole company levels up, not just you.',
+    nextSteps: [
+      'Own and maintain a company-wide prompt library in Notion or Google Drive',
+      'Define the AI maturity roadmap for your department for the next 6 months',
+      'Identify 2 colleagues to coach and run a monthly internal AI clinic',
+    ]
+  }
+};
+
+function getRoleKey(dept) {
+  const map = {
+    'Catalogue / Listings': 'Catalogue / Listings',
+    'Marketing / Content': 'Marketing / Content',
+    'Customer Support': 'Customer Support',
+    'Operations / Logistics': 'Operations / Logistics',
+    'Operations / Admin': 'Operations / Logistics',
+    'Design / Creative': 'Design / Creative',
+    'Data / Analytics': 'Data / Analytics',
+    'Management / Leadership': 'Management / Leadership',
+    'Amazon / E-commerce': 'Catalogue / Listings',
+    'Engineering / Development': 'Data / Analytics',
+    'Product / Design': 'Design / Creative',
+    'Other': 'default',
+  };
+  return map[dept] || 'default';
+}
+
+function getInsights(score, sec) {
+  const ins = [];
+  if ((sec.s2||0) < 8)  ins.push({dot:'#C55A11', text:'Prompt documentation is low — you\'re leaving time on the table by not saving prompts that work.'});
+  if ((sec.s3||0) < 8)  ins.push({dot:'#C00000', text:'Prompt quality needs work — your outputs could be much better with role + format + constraint instructions.'});
+  if ((sec.s5||0) < 10) ins.push({dot:'#C55A11', text:'Low automation usage — even one Zapier workflow could save you hours per week on repetitive tasks.'});
+  if ((sec.s4||0) >= 12) ins.push({dot:'#375623', text:'Strong efficiency gains — you\'re one of the team\'s top AI contributors in time saved.'});
+  if ((sec.s2||0) >= 12) ins.push({dot:'#375623', text:'Excellent prompt management — your saved library is a competitive advantage.'});
+  if (score >= 75) ins.push({dot:'#7030A0', text:'You\'re a team asset — sharing your system could level up everyone around you.'});
+  if (!ins.length) ins.push({dot:'#2E75B6', text:'Solid foundation! The biggest unlock now is saving and sharing prompts that work.'});
+  return ins;
+}
+
+function getActions(band) {
+  return (BAND_NEXT_LEVEL[band]||BAND_NEXT_LEVEL['Developing']).nextSteps;
+}
+
+// ══════════════════════════════════════════ SUBMIT → GOOGLE SHEETS
+async function submitSurvey() {
+  const { total, sections } = computeScore();
+  const bi = getBand(total);
+  const record = {
+    id: Date.now(),
+    name: respondentName,
+    dept: respondentDept,
+    date: new Date().toISOString().split('T')[0],
+    score: total,
+    band: bi.band,
+    sections,
+    answers: { ...answers }
+  };
+
+  // Always save locally first
+  const local = getLocal();
+  local.push(record);
+  saveLocal(local);
+
+  // Try to send to Google Sheets
+  if (SCRIPT_URL) {
+    setLoading(true, 'Saving your response...');
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record)
+      });
+    } catch(e) { console.warn('Sheet sync failed, saved locally', e); }
+    setLoading(false);
+  }
+
+  showResult(total, bi, sections);
+}
+
+function showResult(total, bi, sections) {
+  const insights   = getInsights(total, sections);
+  const actions    = getActions(bi.band);
+  const roleKey    = getRoleKey(respondentDept);
+  const role       = ROLE_DATA[roleKey] || ROLE_DATA['default'];
+  const nextLevel  = BAND_NEXT_LEVEL[bi.band] || BAND_NEXT_LEVEL['Developing'];
+  const sMax       = [8,15,15,16,22];
+
+  document.getElementById('step-survey').classList.remove('active');
+  document.getElementById('step-result').classList.add('active');
+
+  document.getElementById('step-result').innerHTML = `
+
+    <!-- HERO -->
+    <div class="result-hero">
+      <p style="font-size:12px;opacity:0.65;text-transform:uppercase;letter-spacing:0.1em;font-weight:600">AI Maturity Score · ${respondentName}</p>
+      <div class="result-score-ring">${total}</div>
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:4px">${bi.band}</h2>
+      <span class="result-band-badge">${bi.type}</span>
+      <p style="opacity:0.75;font-size:13px;margin-top:10px">${role.icon} ${respondentDept}</p>
+    </div>
+
+    <!-- SECTION SCORES -->
+    <div class="result-grid">
+      ${SECTIONS.map((s,i)=>{
+        const sc = sections[s.id]||0;
+        const pct = Math.round((sc/sMax[i])*100);
+        const col = pct>=70?'#375623':pct>=40?'#9C6A00':'#C00000';
+        return `<div class="result-card">
+          <div class="val" style="color:${col}">${sc}/${sMax[i]}</div>
+          <div class="lbl">${s.title}</div>
+          <div style="margin-top:6px;height:4px;background:var(--gray-200);border-radius:99px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${col};border-radius:99px"></div>
+          </div>
+        </div>`;
+      }).join('')}
+      <div class="result-card">
+        <div class="val" style="color:${bi.color||'var(--primary)'}">${total}/50</div>
+        <div class="lbl">Total Score</div>
+      </div>
+    </div>
+
+    <!-- WHAT THIS MEANS -->
+    <div class="section-card">
+      <div class="section-header"><div class="section-num">📍</div><div class="section-title">What this means for you</div></div>
+      <div class="section-body">
+        <div style="background:var(--blue-xlight);border-radius:var(--radius);padding:1rem 1.25rem;border-left:3px solid var(--accent2)">
+          <p style="font-weight:700;font-size:14px;color:var(--primary);margin-bottom:6px">${nextLevel.headline}</p>
+          <p style="font-size:14px;line-height:1.7;color:var(--gray-700)">${nextLevel.description}</p>
+        </div>
+        <div class="insight-list" style="margin-top:0">
+          ${insights.map(i=>`<div class="insight-item"><div class="insight-dot" style="background:${i.dot}"></div><span>${i.text}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- ROLE-SPECIFIC USE CASES -->
+    <div class="section-card">
+      <div class="section-header"><div class="section-num">${role.icon}</div><div class="section-title">AI use cases for ${respondentDept}</div></div>
+      <div class="section-body">
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">Specific ways your role can use AI right now — not generic tips.</p>
+        ${role.useCases.map((uc,i)=>`
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--gray-200)">
+            <div style="background:var(--blue-xlight);color:var(--accent2);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:1px">${i+1}</div>
+            <p style="font-size:14px;line-height:1.6;color:var(--gray-700)">${uc}</p>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- TOOLS -->
+    <div class="section-card">
+      <div class="section-header"><div class="section-num">🛠</div><div class="section-title">Recommended AI tools for ${respondentDept}</div></div>
+      <div class="section-body" style="padding:0">
+        ${role.tools.map((t,i)=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 1.5rem;border-bottom:1px solid var(--gray-200);${i===role.tools.length-1?'border-bottom:none':''}">
+            <div>
+              <p style="font-weight:700;font-size:14px;color:var(--primary)">${t.name}</p>
+              <p style="font-size:13px;color:var(--gray-500)">${t.use}</p>
+            </div>
+            <a href="${t.url}" target="_blank" style="background:var(--blue-xlight);color:var(--accent2);border:1px solid var(--blue-light);border-radius:6px;padding:5px 14px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Try it →</a>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- PROMPT TEMPLATE -->
+    <div class="section-card">
+      <div class="section-header"><div class="section-num">📋</div><div class="section-title">Steal this prompt — ${role.promptTemplate.title}</div></div>
+      <div class="section-body">
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">A ready-to-use prompt template for your role. Copy it, fill in the brackets, and paste into Claude or ChatGPT.</p>
+        <div style="background:#1A2332;border-radius:var(--radius);padding:1.25rem;position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:11px;color:#7A8594;font-weight:600;text-transform:uppercase;letter-spacing:0.06em">Prompt Template</span>
+            <button onclick="copyPrompt(this)" style="background:rgba(255,255,255,0.1);color:#9BB3C8;border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit">Copy</button>
+          </div>
+          <pre id="prompt-template" style="font-family:'Courier New',monospace;font-size:12px;line-height:1.7;color:#C8D9E8;white-space:pre-wrap;word-break:break-word;margin:0">${role.promptTemplate.prompt}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- 30-DAY PLAN -->
+    <div class="section-card">
+      <div class="section-header"><div class="section-num">🎯</div><div class="section-title">Your next 30 days — ${bi.band} → ${getNextBandName(bi.band)}</div></div>
+      <div class="section-body">
+        ${actions.map((a,i)=>`
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--gray-200)">
+            <div style="background:var(--accent2);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${i+1}</div>
+            <p style="font-size:14px;line-height:1.6;padding-top:3px">${a}</p>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:2rem;padding-bottom:1rem">
+      <button class="btn-primary" onclick="resetSurvey()">Take Again</button>
+    </div>`;
+
+  window.scrollTo(0,0);
+}
+
+function getNextBandName(band) {
+  const order = ['Beginner','Developing','Proficient','Advanced','Expert'];
+  const i = order.indexOf(band);
+  return i < order.length - 1 ? order[i+1] : 'Expert (maintain)';
+}
+
+function copyPrompt(btn) {
+  const text = document.getElementById('prompt-template').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent = 'Copied ✓';
+    btn.style.color = '#4CAF50';
+    setTimeout(()=>{ btn.textContent='Copy'; btn.style.color=''; }, 2000);
+  });
+}
+
+function resetSurvey() {
+  answers={}; currentSection=0; respondentName=''; respondentDept='';
+  document.getElementById('step-result').classList.remove('active');
+  document.getElementById('step-0').classList.add('active');
+  document.getElementById('inp-name').value=''; document.getElementById('inp-dept').value='';
+}
+
+// ══════════════════════════════════════════ LOCAL STORAGE
+function getLocal() { try { return JSON.parse(localStorage.getItem('ai_survey_v2')||'[]'); } catch(e){return[];} }
+function saveLocal(d) { localStorage.setItem('ai_survey_v2', JSON.stringify(d)); }
+
+// ══════════════════════════════════════════ DASHBOARD
+function loginDash() {
+  if (document.getElementById('dash-pw').value === ADMIN_PASSWORD) {
+    document.getElementById('dash-login').style.display='none';
+    document.getElementById('dash-content').style.display='block';
+    loadDashboard();
+  } else { document.getElementById('login-error').style.display='block'; }
+}
+
+async function loadDashboard() {
+  if (!SCRIPT_URL) {
+    document.getElementById('setup-warning').style.display='flex';
+    dashResponses = getLocal();
+    renderDashboard();
+    return;
+  }
+  document.getElementById('sync-status').style.display='block';
+  setSyncStatus('wait','Fetching from Google Sheets...');
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=get');
+    const data = await res.json();
+    if (data && data.rows) {
+      dashResponses = data.rows;
+      setSyncStatus('ok', `${dashResponses.length} responses loaded from Google Sheets`);
+    } else { throw new Error('bad response'); }
+  } catch(e) {
+    setSyncStatus('err','Could not reach Google Sheets — showing local data');
+    dashResponses = getLocal();
+  }
+  renderDashboard();
+}
+
+function refreshDashboard() { loadDashboard(); }
+
+function setSyncStatus(state, text) {
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot sync-' + state;
+  document.getElementById('sync-text').textContent = text;
+}
+
+function saveScriptUrl() {
+  const val = document.getElementById('script-url-inp').value.trim();
+  if (!val.startsWith('https://script.google.com')) { alert('Please paste a valid Google Apps Script URL (starts with https://script.google.com)'); return; }
+  SCRIPT_URL = val;
+  localStorage.setItem('gs_script_url', val);
+  document.getElementById('setup-warning').style.display='none';
+  loadDashboard();
+}
+
+function renderDashboard() {
+  const data = dashResponses;
+  document.getElementById('dash-subtitle').textContent = `${data.length} response${data.length!==1?'s':''} · Live from Google Sheets`;
+  document.getElementById('resp-count').textContent = `(${data.length})`;
+  renderKPIs(data); renderCharts(data); renderTable();
+}
+
+function renderKPIs(data) {
+  if (!data.length) { document.getElementById('kpi-row').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--gray-500)">No responses yet</div>'; return; }
+  const avg = Math.round(data.reduce((a,b)=>a+normalizeScore(b.score),0)/data.length);
+  const experts  = data.filter(d=>normalizeScore(d.score)>40).length;
+  const beginners= data.filter(d=>normalizeScore(d.score)<=10).length;
+  const kpis = [
+    {val:data.length,    lbl:'Total Responses',    sub:'All time'},
+    {val:avg+'/50',      lbl:'Average Score',       sub:getBand(avg).band},
+    {val:experts,        lbl:'Power Users (>40)',   sub:'Score > 40'},
+    {val:beginners,      lbl:'Need Training',       sub:'Score ≤ 10'},
+  ];
+  document.getElementById('kpi-row').innerHTML = kpis.map(k=>`<div class="kpi-card"><div class="kpi-val">${k.val}</div><div class="kpi-lbl">${k.lbl}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+}
+
+function renderCharts(data) {
+  if (chartDist){chartDist.destroy();chartBands.destroy();chartSections.destroy();chartDepts.destroy();}
+  if (!data.length) return;
+  const bins=[0,0,0,0,0];
+  data.forEach(d=>{
+    const s=normalizeScore(d.score);
+    if(s<=10)bins[0]++;else if(s<=20)bins[1]++;else if(s<=30)bins[2]++;else if(s<=40)bins[3]++;else bins[4]++;
+  });
+
+  chartDist = new Chart(document.getElementById('chart-dist'),{type:'bar',data:{labels:['0–10','11–20','21–30','31–40','41–50'],datasets:[{label:'Employees',data:bins,backgroundColor:['#FFDFD6','#FCE4D6','#FFF3CC','#E2EFDA','#E2D9F3'],borderColor:['#C00000','#C55A11','#9C6A00','#375623','#7030A0'],borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  chartBands = new Chart(document.getElementById('chart-bands'),{type:'doughnut',data:{labels:['Beginner','Developing','Proficient','Advanced','Expert'],datasets:[{data:bins,backgroundColor:['#FFDFD6','#FCE4D6','#FFF3CC','#E2EFDA','#E2D9F3'],borderColor:['#C00000','#C55A11','#9C6A00','#375623','#7030A0'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:12},padding:12}}},cutout:'60%'}});
+
+  const sKeys=['s1','s2','s3','s4','s5'],sMax=[5,10,10,10,15],sLabels=['Usage','Prompt Mgmt','Quality','Efficiency','Advanced'];
+  const sAvg=sKeys.map((k,i)=>{
+    const sum=data.reduce((a,b)=>{
+      const sv = b.sections && typeof b.sections === 'object' ? (b.sections[k]||0) : 0;
+      return a + (+sv||0);
+    },0);
+    return data.length?Math.round((sum/data.length/sMax[i])*100):0;
+  });
+  chartSections = new Chart(document.getElementById('chart-sections'),{type:'radar',data:{labels:sLabels,datasets:[{label:'Team Avg (%)',data:sAvg,backgroundColor:'rgba(46,117,182,0.15)',borderColor:'#2E75B6',borderWidth:2,pointBackgroundColor:'#2E75B6'}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:20}}},plugins:{legend:{display:false}}}});
+
+  const dm={};
+  data.forEach(d=>{const k=d.dept||'Unknown';dm[k]=(dm[k]||0)+1;});
+  chartDepts = new Chart(document.getElementById('chart-depts'),{type:'bar',data:{labels:Object.keys(dm),datasets:[{label:'Count',data:Object.values(dm),backgroundColor:'#DEEAF1',borderColor:'#2E75B6',borderWidth:1.5,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{stepSize:1}}}}});
+}
+
+function renderTable() {
+  const q=(document.getElementById('search-box')?.value||'').toLowerCase();
+  const filtered=dashResponses.filter(d=>(d.name||'').toLowerCase().includes(q)||(d.dept||'').toLowerCase().includes(q));
+  const tbody=document.getElementById('resp-tbody');
+  const empty=document.getElementById('table-empty');
+  if (!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const sKeys=['s1','s2','s3','s4','s5'];
+  tbody.innerHTML=filtered.map((d,i)=>{
+    const s=normalizeScore(d.score);
+    const bi=getBand(s);
+    const col=s>=41?'#7030A0':s>=31?'#375623':s>=21?'#9C6A00':s>=11?'#C55A11':'#C00000';
+    const barPct=Math.round((s/50)*100);
+    return `<tr>
+      <td>${i+1}</td><td><strong>${d.name||'—'}</strong></td><td>${d.dept||'—'}</td>
+      <td style="color:var(--gray-500)">${d.date||'—'}</td>
+      <td><div class="score-bar-wrap"><strong>${s}/50</strong><div class="score-bar-track"><div class="score-bar-fill" style="width:${barPct}%;background:${col}"></div></div></div></td>
+      <td><span class="band-pill band-${bi.band}">${bi.band}</span></td>
+      ${sKeys.map(k=>`<td>${d.sections&&d.sections[k]!==undefined?d.sections[k]:'–'}</td>`).join('')}
+      <td><button onclick='showDetail(${JSON.stringify(d).replace(/'/g,"&#39;")})' style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;color:var(--accent)">View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function showDetail(d) {
+  const s=normalizeScore(d.score);
+  const bi=getBand(s);
+  const actions=getActions(bi.band);
+  const sMax=[5,10,10,10,15];
+  document.getElementById('modal-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:1.5rem">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--blue-xlight);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--primary)">${s}/50</div>
+      <div><h2 style="font-size:18px;font-weight:700;color:var(--primary)">${d.name}</h2>
+      <p style="font-size:13px;color:var(--gray-500)">${d.dept} · ${d.date}</p>
+      <span class="band-pill band-${bi.band}" style="margin-top:4px;display:inline-block">${bi.band} — ${bi.type}</span></div>
+    </div>
+    <h3 style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Section Scores</h3>
+    <div class="modal-section-scores">${SECTIONS.map((sec,i)=>`<div class="modal-score-row"><span>${sec.title}</span><span class="modal-score-val">${d.sections&&d.sections[sec.id]!==undefined?d.sections[sec.id]:0}/${sMax[i]}</span></div>`).join('')}</div>
+    ${d.answers&&d.answers.q18?`<h3 style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.05em;margin:1rem 0 8px">Best Prompt</h3><div style="background:var(--gray-100);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;border-left:3px solid var(--accent2)">${d.answers.q18}</div>`:''}
+    ${d.answers&&d.answers.q19?`<h3 style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.05em;margin:1rem 0 8px">Automation Described</h3><div style="background:var(--gray-100);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;border-left:3px solid var(--green)">${d.answers.q19}</div>`:''}
+    <h3 style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.05em;margin:1rem 0 8px">Recommended Actions</h3>
+    <div style="display:flex;flex-direction:column;gap:6px">${actions.map((a,i)=>`<div style="display:flex;gap:10px;align-items:flex-start"><div style="background:var(--accent2);color:white;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${i+1}</div><span style="font-size:13px">${a}</span></div>`).join('')}</div>`;
+  document.getElementById('detail-modal').classList.remove('hidden');
+}
+
+function closeModal(){document.getElementById('detail-modal').classList.add('hidden');}
+document.getElementById('detail-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+function exportCSV(){
+  const data=dashResponses;
+  if(!data.length){alert('No data to export.');return;}
+  const headers=['Name','Department','Date','Total Score','Band','S1 Usage','S2 Prompt Mgmt','S3 Quality','S4 Efficiency','S5 Advanced','Best Prompt','Automation Example','Biggest Challenge'];
+  const rows=data.map(d=>[d.name,d.dept,d.date,d.score,d.band,d.sections?.s1||0,d.sections?.s2||0,d.sections?.s3||0,d.sections?.s4||0,d.sections?.s5||0,(d.answers?.q18||'').replace(/"/g,'""'),(d.answers?.q19||'').replace(/"/g,'""'),(d.answers?.q20||'').replace(/"/g,'""')]);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='ai_survey_results.csv';a.click();
+}
+
+function setLoading(show, msg=''){
+  document.getElementById('loading-overlay').classList.toggle('hidden',!show);
+  if(msg)document.getElementById('loading-msg').textContent=msg;
+}
+</script>
+</body>
+</html>
